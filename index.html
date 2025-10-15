@@ -1,4 +1,4 @@
-<!doctype html>
+<!doctype html> 
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -6,7 +6,7 @@
   <title>AI Investment Workflow Demo</title>
 
   <style>
-    :root {
+    :root{
       --bg:#f5f7fb;
       --card:#ffffff;
       --muted:#6b7280;
@@ -20,13 +20,23 @@
       background:linear-gradient(180deg,#eef2ff 0%, var(--bg) 100%);
       color:#111827;
       padding:28px;
+      overflow-x:hidden;
     }
+    .fade-in {
+      opacity:0;
+      transform:translateY(10px);
+      animation: fadeInUp 0.8s forwards;
+    }
+    @keyframes fadeInUp {
+      to { opacity:1; transform:translateY(0); }
+    }
+
     .wrap{max-width:1000px;margin:0 auto;}
     .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
     .title{font-size:20px;font-weight:700}
     .sub{font-size:13px;color:var(--muted)}
-    .card{background:var(--card);border-radius:14px;box-shadow:0 6px 30px rgba(15,23,42,0.08);overflow:hidden;margin-bottom:24px;}
-    .content{display:flex;gap:24px;padding:28px;flex-wrap:wrap;align-items:center;min-height:360px}
+    .card{background:var(--card);border-radius:14px;box-shadow:0 6px 30px rgba(15,23,42,0.08);overflow:hidden;transition:all .5s ease;}
+    .content{display:flex;gap:24px;padding:28px;flex-wrap:wrap;align-items:center;min-height:360px;transition:all .5s ease;}
     .left{flex:1 1 260px;display:flex;justify-content:center;align-items:center;}
     .badge{
       width:210px;height:210px;border-radius:18px;padding:22px;color:white;display:grid;place-items:center;
@@ -39,14 +49,15 @@
     .right{flex:1 1 380px}
     .what{font-size:16px;font-weight:700;margin-bottom:12px}
     .bullets{display:flex;flex-direction:column;gap:12px}
-    .bullet{display:flex;gap:12px;align-items:flex-start}
+    .bullet{display:flex;gap:12px;align-items:flex-start;transition:all .4s ease;}
     .dot{width:44px;height:44px;border-radius:10px;background:#f3f4f6;display:grid;place-items:center;font-size:18px;box-shadow:0 6px 16px rgba(2,6,23,0.04)}
     .bullet .txt{font-weight:600}
     .muted{color:var(--muted);font-size:12px;margin-top:4px}
     .controls{margin-top:18px;display:flex;gap:8px;align-items:center}
-    button.btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:600}
+    button.btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:600;transition:all .3s ease;}
     button.ghost{background:white;border:1px solid #e6e7ee;color:#374151}
     button.primary{background:linear-gradient(90deg,var(--accent-from),var(--accent-to));color:white}
+    button.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.06);}
     .dots{display:flex;gap:8px;margin-left:auto}
     .dotbt{width:10px;height:10px;border-radius:999px;background:#e6e7ee;border:0;cursor:pointer}
     .dotbt.active{background:linear-gradient(90deg,var(--accent-from),var(--accent-to));box-shadow:0 6px 18px rgba(16,185,129,0.18)}
@@ -56,18 +67,12 @@
     .slide-hide{opacity:0;transform:translateX(24px) scale(.995)}
     .footer{margin-top:16px;padding:16px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 6px 20px rgba(12,17,43,0.04)}
     .small{font-size:13px;color:var(--muted)}
-
-    /* --- New Simulation Styling --- */
-    .sim-panel{
-      background:#fff;
-      border-radius:14px;
-      box-shadow:0 6px 30px rgba(15,23,42,0.06);
-      padding:24px;
+    @media (max-width:820px){
+      .content{padding:18px;min-height:420px}
+      .left{order:2}
+      .right{order:1}
+      .badge{width:180px;height:180px}
     }
-    .sim-title{font-size:18px;font-weight:700;margin-bottom:10px;}
-    .sim-log{height:160px;overflow-y:auto;background:#f9fafb;border-radius:10px;padding:10px;font-size:13px;}
-    .sim-log div{margin-bottom:4px;}
-    .sim-balance{font-weight:700;margin:8px 0;}
   </style>
 </head>
 <body>
@@ -84,7 +89,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="workflowCard">
       <div class="content">
         <div class="left">
           <div class="badge" id="badge" style="background:linear-gradient(135deg,#10b981,#06b6d4)">
@@ -120,181 +125,171 @@
         </div>
       </div>
     </div>
-
-    <!-- NEW: Live AI Trading Simulation Panel -->
-    <div class="sim-panel">
-      <div class="sim-title">💹 Live AI Trading Simulation Prototype</div>
-      <div class="sim-balance">Balance: <span id="balance">$10,000</span></div>
-      <button class="btn primary" id="startSim">▶ Start Simulation</button>
-      <button class="btn ghost" id="stopSim">⏸ Stop</button>
-      <div class="sim-log" id="log"></div>
-    </div>
   </div>
 
 <script>
-  const slides = [
-    {
-      title:"🤖 AI Trading Engine",
-      subtitle:"Automated portfolio & risk management",
-      bullets:[
-        "AI robots analyze market & place orders automatically",
-        "Adjust lot sizes and risk settings per asset",
-        "Book stop-losses and profit targets automatically"
-      ],
-      color:"linear-gradient(135deg,#10b981,#06b6d4)"
-    },
-    {
-      title:"📈 Step 1 — Market Analysis",
-      subtitle:"AI scans assets & trends",
-      bullets:[
-        "Fetch live market data",
-        "Identify potential high-return assets",
-        "Forecast risk & volatility"
-      ],
-      color:"linear-gradient(135deg,#3b82f6,#06b6d4)"
-    },
-    {
-      title:"💰 Step 2 — Automatic Orders",
-      subtitle:"Place trades & manage lots",
-      bullets:[
-        "Execute buy/sell orders automatically",
-        "Allocate funds per strategy & risk",
-        "Monitor stop-loss and take-profit levels"
-      ],
-      color:"linear-gradient(135deg,#f59e0b,#f97316)"
-    },
-    {
-      title:"📊 Step 3 — Portfolio Dashboard",
-      subtitle:"Track performance & metrics",
-      bullets:[
-        "Visual charts for returns & cashflow",
-        "AI generates reports for each investor",
-        "Adjust strategies based on performance"
-      ],
-      color:"linear-gradient(135deg,#6366f1,#8b5cf6)"
-    },
-    {
-      title:"🏢 Step 4 — Company & Client Services",
-      subtitle:"Building asset management platform",
-      bullets:[
-        "Provide clients safe, automated investment access",
-        "Ensure predictable cashflow & satisfied ROI",
-        "Scalable system for multiple investors"
-      ],
-      color:"linear-gradient(135deg,#f43f5e,#ec4899)"
-    }
-  ];
-
-  const badge = document.getElementById('badge');
-  const badgeTitle = document.getElementById('badgeTitle');
-  const badgeSubtitle = document.getElementById('badgeSubtitle');
-  const bulletsEl = document.getElementById('bullets');
-  const slideNote = document.getElementById('slideNote');
-  const slideWrap = document.getElementById('slideWrap');
-  const progressBar = document.getElementById('progressBar');
-  const progressText = document.getElementById('progressText');
-  const dotsEl = document.getElementById('dots');
-
-  let index=0;
-  let autoId=null;
-  const delay=6000;
-
-  function renderBullets(slideIndex){
-    bulletsEl.innerHTML='';
-    const b=slides[slideIndex].bullets;
-    b.forEach((txt,i)=>{
-      const item=document.createElement('div');
-      item.className='bullet';
-      const icon=document.createElement('div');
-      icon.className='dot';
-      icon.textContent=['🤖','📈','💰','📊','🏢'][i]||'•';
-      const t=document.createElement('div');
-      const title=document.createElement('div'); title.className='txt'; title.textContent=txt;
-      const note=document.createElement('div'); note.className='muted'; note.textContent=i===0?'Primary action':''; 
-      t.appendChild(title); t.appendChild(note);
-      item.appendChild(icon); item.appendChild(t);
-      bulletsEl.appendChild(item);
-    });
-  }
-
-  function updateProgress(){ 
-    const pct=Math.round(((index+1)/slides.length)*100);
-    progressBar.style.width=pct+'%';
-    progressText.textContent=(index+1)+'/'+slides.length;
-  }
-
-  function updateDots(){
-    dotsEl.innerHTML='';
-    slides.forEach((_,i)=>{
-      const d=document.createElement('button');
-      d.className='dotbt'+(i===index?' active':'');
-      d.onclick=()=>{ goTo(i); };
-      dotsEl.appendChild(d);
-    });
-  }
-
-  function setSlide(i,instant){
-    slideWrap.classList.add('slide-hide');
-    badge.style.transform='scale(.98) translateY(6px)';
-    clearTimeout(window._swapTm);
-    window._swapTm=setTimeout(()=>{
-      const s=slides[i];
-      badge.style.background=s.color;
-      badgeTitle.textContent=s.title;
-      badgeSubtitle.textContent=s.subtitle;
-      renderBullets(i);
-      slideNote.textContent='Primary action';
-      updateProgress();
-      updateDots();
-      slideWrap.classList.remove('slide-hide');
-      badge.style.transform='scale(1) translateY(0)';
-    }, instant?10:220);
-  }
-
-  function next(){ index=(index+1)%slides.length; setSlide(index); resetAuto(); }
-  function prev(){ index=(index-1+slides.length)%slides.length; setSlide(index); resetAuto(); }
-  function goTo(i){ index=i%slides.length; setSlide(index); resetAuto(); }
-  function resetAuto(){ if(autoId) clearInterval(autoId); autoId=setInterval(next,delay); }
-
-  setSlide(0,true);
-  resetAuto();
-
-  document.getElementById('nextBtn').addEventListener('click', next);
-  document.getElementById('prevBtn').addEventListener('click', prev);
-  document.getElementById('pdfBtn').addEventListener('click',()=>window.print());
-
-  /* === NEW: Live AI Trading Simulation === */
-  const log = document.getElementById('log');
-  const balanceEl = document.getElementById('balance');
-  let balance = 10000;
-  let simInterval = null;
-
-  function addLog(msg){
-    const div = document.createElement('div');
-    div.textContent = msg;
-    log.appendChild(div);
-    log.scrollTop = log.scrollHeight;
-  }
-
-  function simulateTrade(){
-    const market = ["📈 Market rising","📉 Market falling","➖ Stable market"][Math.floor(Math.random()*3)];
-    const action = ["Buy","Sell","Hold"][Math.floor(Math.random()*3)];
-    const profit = (Math.random()*200-100).toFixed(2);
-    balance += parseFloat(profit);
-    balanceEl.textContent = "$" + balance.toFixed(2);
-    addLog(`${market} → AI decided to ${action}. P/L: ${profit>0?'+':''}${profit}`);
-  }
-
-  document.getElementById('startSim').addEventListener('click',()=>{
-    if(simInterval) clearInterval(simInterval);
-    addLog("🚀 Simulation started...");
-    simInterval = setInterval(simulateTrade, 2000);
+// =============================
+// SLIDESHOW (Original Feature)
+// =============================
+const slides = [
+  {title:"🤖 AI Trading Engine",subtitle:"Automated portfolio & risk management",bullets:[
+    "AI robots analyze market & place orders automatically",
+    "Adjust lot sizes and risk settings per asset",
+    "Book stop-losses and profit targets automatically"],color:"linear-gradient(135deg,#10b981,#06b6d4)"},
+  {title:"📈 Step 1 — Market Analysis",subtitle:"AI scans assets & trends",bullets:[
+    "Fetch live market data",
+    "Identify potential high-return assets",
+    "Forecast risk & volatility"],color:"linear-gradient(135deg,#3b82f6,#06b6d4)"},
+  {title:"💰 Step 2 — Automatic Orders",subtitle:"Place trades & manage lots",bullets:[
+    "Execute buy/sell orders automatically",
+    "Allocate funds per strategy & risk",
+    "Monitor stop-loss and take-profit levels"],color:"linear-gradient(135deg,#f59e0b,#f97316)"},
+  {title:"📊 Step 3 — Portfolio Dashboard",subtitle:"Track performance & metrics",bullets:[
+    "Visual charts for returns & cashflow",
+    "AI generates reports for each investor",
+    "Adjust strategies based on performance"],color:"linear-gradient(135deg,#6366f1,#8b5cf6)"},
+  {title:"🏢 Step 4 — Company & Client Services",subtitle:"Building asset management platform",bullets:[
+    "Provide clients safe, automated investment access",
+    "Ensure predictable cashflow & satisfied ROI",
+    "Scalable system for multiple investors"],color:"linear-gradient(135deg,#f43f5e,#ec4899)"}
+];
+const badge=document.getElementById('badge');
+const badgeTitle=document.getElementById('badgeTitle');
+const badgeSubtitle=document.getElementById('badgeSubtitle');
+const bulletsEl=document.getElementById('bullets');
+const slideNote=document.getElementById('slideNote');
+const slideWrap=document.getElementById('slideWrap');
+const progressBar=document.getElementById('progressBar');
+const progressText=document.getElementById('progressText');
+const dotsEl=document.getElementById('dots');
+let index=0;let autoId=null;const delay=6000;
+function renderBullets(slideIndex){
+  bulletsEl.innerHTML='';
+  const b=slides[slideIndex].bullets;
+  b.forEach((txt,i)=>{
+    const item=document.createElement('div');
+    item.className='bullet fade-in';
+    const icon=document.createElement('div');
+    icon.className='dot';
+    icon.textContent=['🤖','📈','💰','📊','🏢'][i]||'•';
+    const t=document.createElement('div');
+    const title=document.createElement('div'); title.className='txt'; title.textContent=txt;
+    const note=document.createElement('div'); note.className='muted'; note.textContent=i===0?'Primary action':'';
+    t.appendChild(title); t.appendChild(note);
+    item.appendChild(icon); item.appendChild(t);
+    bulletsEl.appendChild(item);
   });
-
-  document.getElementById('stopSim').addEventListener('click',()=>{
-    clearInterval(simInterval);
-    addLog("⏸ Simulation stopped.");
+}
+function updateProgress(){const pct=Math.round(((index+1)/slides.length)*100);
+  progressBar.style.width=pct+'%';progressText.textContent=(index+1)+'/'+slides.length;}
+function updateDots(){
+  dotsEl.innerHTML='';slides.forEach((_,i)=>{
+    const d=document.createElement('button');
+    d.className='dotbt'+(i===index?' active':'');
+    d.onclick=()=>{goTo(i);};
+    dotsEl.appendChild(d);
   });
+}
+function setSlide(i,instant){
+  slideWrap.classList.add('slide-hide');badge.style.transform='scale(.98) translateY(6px)';
+  clearTimeout(window._swapTm);
+  window._swapTm=setTimeout(()=>{
+    const s=slides[i];
+    badge.style.background=s.color;
+    badgeTitle.textContent=s.title;
+    badgeSubtitle.textContent=s.subtitle;
+    renderBullets(i);
+    slideNote.textContent='Primary action';
+    updateProgress();updateDots();
+    slideWrap.classList.remove('slide-hide');
+    badge.style.transform='scale(1) translateY(0)';
+  },instant?10:220);
+}
+function next(){index=(index+1)%slides.length;setSlide(index);resetAuto();}
+function prev(){index=(index-1+slides.length)%slides.length;setSlide(index);resetAuto();}
+function goTo(i){index=i%slides.length;setSlide(index);resetAuto();}
+function resetAuto(){if(autoId)clearInterval(autoId);autoId=setInterval(next,delay);}
+setSlide(0,true);resetAuto();
+document.getElementById('nextBtn').addEventListener('click',next);
+document.getElementById('prevBtn').addEventListener('click',prev);
+document.getElementById('pdfBtn').addEventListener('click',()=>window.print());
+
+// =============================
+// MANUAL vs AI COMPARISON
+// =============================
+const headerRight=document.querySelector(".header > div:last-child");
+const compareBtn=document.createElement("button");
+compareBtn.className="btn ghost";
+compareBtn.textContent="📊 Comparison";
+compareBtn.style.marginLeft="10px";
+headerRight.appendChild(compareBtn);
+
+const compareSection=document.createElement("div");
+compareSection.className="card fade-in";
+compareSection.style.marginTop="24px";
+compareSection.style.display="none";
+compareSection.innerHTML=`
+<div class="content" style="flex-direction:column;align-items:flex-start;text-align:left;">
+  <h2 style="font-size:22px;font-weight:800;margin-bottom:10px;">👨‍🏫 Manual Trading vs 🤖 AI Automation</h2>
+  <p style="color:#6b7280;max-width:700px">Let’s learn how traders follow this strategy step-by-step manually, and how AI does it automatically — without fear, fatigue, or human error 💪</p>
+
+  <div id="manualPart" class="fade-in" style="margin-top:20px;width:100%;background:#fff;border-radius:14px;padding:20px;box-shadow:0 6px 20px rgba(15,23,42,0.05)">
+    <h3>👨‍💻 Manual Strategy — “How a human trades Gold (XAUUSD)”</h3>
+    <ol style="margin-top:10px;line-height:1.8;font-size:14px;color:#374151;">
+      <li>📈 Open your chart on <strong>XAUUSD</strong> (Gold) and set timeframe to <strong>M15</strong>.</li>
+      <li>⏰ Wait for the <strong>London session</strong> to begin — only trade then!</li>
+      <li>👀 Watch carefully for <strong>two same-color candles</strong> (2 greens = BUY 🟢, 2 reds = SELL 🔴).</li>
+      <li>📏 Set <strong>Stop Loss</strong> at previous candle’s high/low + small buffer.</li>
+      <li>🎯 Set <strong>Take Profit</strong> as 1:3 (for BUY) or 1:2 (for SELL) of the SL distance.</li>
+      <li>🧮 Risk only <strong>2% of your account balance</strong> — manually calculate lot size every time!</li>
+      <li>📅 Only <strong>1 trade per day</strong> — and stop trading after hitting 1% weekly ROI.</li>
+    </ol>
+    <p style="color:#6b7280;font-size:13px;margin-top:8px;">😰 Hard work! You must watch charts, calculate risks, and avoid emotions all day.</p>
+  </div>
+
+  <div id="aiPart" class="fade-in" style="margin-top:30px;width:100%;background:linear-gradient(135deg,#06b6d4,#10b981);border-radius:14px;padding:22px;color:white;box-shadow:0 6px 30px rgba(6,182,212,0.3)">
+    <h3>🤖 AI Automation — “How our tool trades for you”</h3>
+    <ul style="margin-top:10px;line-height:1.8;font-size:14px;">
+      <li>🧠 AI scans <strong>XAUUSD (Gold)</strong> 24/7 — no sleep, no distraction.</li>
+      <li>📊 Detects <strong>London session</strong> automatically using server time.</li>
+      <li>⚡ Identifies <strong>two consecutive candles</strong> instantly — executes trade in milliseconds!</li>
+      <li>🎯 Calculates <strong>SL & TP</strong> with the same 1:3 or 1:2 logic — no manual input needed.</li>
+      <li>💵 Calculates <strong>lot size</strong> automatically based on account balance (2% risk per trade).</li>
+      <li>🛑 Ensures only <strong>1 trade per day</strong> and stops when 1% weekly ROI is reached.</li>
+    </ul>
+    <p style="font-size:13px;margin-top:8px;opacity:0.9;">😎 No emotions. No mistakes. Just logic and precision.</p>
+  </div>
+
+  <div id="compareResult" class="fade-in" style="margin-top:30px;width:100%;">
+    <h3>📋 Results — Why AI Wins</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:14px;">
+      <div style="background:#fff;padding:16px;border-radius:14px;box-shadow:0 6px 20px rgba(15,23,42,0.05)">
+        <h4>⏰ Time Saver</h4>
+        <p style="color:#6b7280;font-size:13px;">AI never sleeps — it handles all sessions automatically while you relax 😴.</p>
+      </div>
+      <div style="background:#fff;padding:16px;border-radius:14px;box-shadow:0 6px 20px rgba(15,23,42,0.05)">
+        <h4>🧘‍♂️ No Emotions</h4>
+        <p style="color:#6b7280;font-size:13px;">No fear, greed, or hesitation. Pure math & market logic.</p>
+      </div>
+      <div style="background:#fff;padding:16px;border-radius:14px;box-shadow:0 6px 20px rgba(15,23,42,0.05)">
+        <h4>📉 Risk Managed</h4>
+        <p style="color:#6b7280;font-size:13px;">Automatically maintains 2% risk rule with precise SL/TP ratio.</p>
+      </div>
+      <div style="background:#fff;padding:16px;border-radius:14px;box-shadow:0 6px 20px rgba(15,23,42,0.05)">
+        <h4>⚙️ Consistency</h4>
+        <p style="color:#6b7280;font-size:13px;">Same logic, every time — no skipped trades or tired eyes 👀.</p>
+      </div>
+    </div>
+  </div>
+</div>`;
+document.body.appendChild(compareSection);
+
+let showCompare=false;
+compareBtn.onclick=()=>{
+  showCompare=!showCompare;
+  compareSection.style.display=showCompare?'block':'none';
+  window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+};
 </script>
 </body>
 </html>
